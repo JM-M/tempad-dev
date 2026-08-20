@@ -24,6 +24,11 @@ Create operations add and automatically place one new root. Updates are scoped b
 identity: omission preserves live state, while explicit removal removes managed content. Read
 structural verification and resolve warnings before claiming native authoring is complete.
 
+Selection is the person's channel for directing the work. Use `select_node` only to show them a
+specific node — one you are asking about, or the result you just produced — never as a step before
+reading, since every read tool already accepts `nodeId`. The response returns the previous selection;
+restore it when you are done borrowing their view.
+
 Use `get_screenshot` when rendered pixels affect a decision, and open the returned image before
 claiming visual verification. Use a returned `asset.localPath` directly when present; otherwise use
 `asset.url`. Native media hashes are identities inside the current Figma file, not preview bytes.

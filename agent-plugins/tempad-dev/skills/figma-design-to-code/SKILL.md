@@ -41,6 +41,12 @@ establish unevidenced states, responsive behavior, business logic, navigation,
 validation, analytics, or project conventions. Treat `get_structure` as
 hierarchy and geometry evidence only, never as missing style truth.
 
+The user's selection is how they point at work, so leave it alone by default.
+Use `select_node` only to show them a specific node — one you need to ask
+about, or the node you just finished — never before reading, since every read
+tool accepts `nodeId` directly. Restore the returned `previousSelection` once
+you no longer need their view.
+
 ## Workflow
 
 ### 1. Establish the implementation envelope
