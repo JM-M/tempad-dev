@@ -108,9 +108,12 @@ async function handleGetStructure(args?: GetStructureParametersInput): Promise<G
   }
 
   if (root === 'page') {
-    // The page itself is not a scene node, so its children are the outlinable roots.
+    // The page itself is not a scene node, so its children are the outlinable roots. Depth stays
+    // relative to the page, so depth 1 lists those children alone rather than expanding each one.
+    // That also keeps the ids honest: deeper limits let wrapper flattening replace a single-child
+    // frame with its child, which would hand back ids that are not the page's own frames.
     const children = figma.currentPage.children.filter((child) => child.visible)
-    return runGetStructure(children, depth, options?.native)
+    return runGetStructure(children, depth === undefined ? undefined : depth - 1, options?.native)
   }
 
   return runGetStructure([resolveSingleNode(nodeId)], depth, options?.native)

@@ -296,7 +296,11 @@ describe('mcp/runtime', () => {
     // No selection and no nodeId: this is the cold-start entry point, so it must not throw.
     await runtime.MCP_TOOL_HANDLERS.get_structure({ root: 'page', options: { depth: 1 } })
 
-    expect(mocks.runGetStructure).toHaveBeenCalledWith([visible], 1, undefined)
+    // Depth is relative to the page, so depth 1 lists its children without expanding them.
+    expect(mocks.runGetStructure).toHaveBeenCalledWith([visible], 0, undefined)
+
+    await runtime.MCP_TOOL_HANDLERS.get_structure({ root: 'page', options: { depth: 3 } })
+    expect(mocks.runGetStructure).toHaveBeenLastCalledWith([visible], 2, undefined)
   })
 
   it('returns no roots for an empty page rather than failing', async () => {

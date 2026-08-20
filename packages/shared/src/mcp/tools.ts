@@ -121,7 +121,7 @@ export const GetStructureParametersSchema = z
     root: z
       .enum(['page'])
       .describe(
-        "Outline the current page's top-level children instead of one node. Use it as the entry point when nothing is selected and you hold no node id; pair with options.depth 1 for a compact frame directory to pick from. Mutually exclusive with nodeId."
+        "Outline the current page's top-level children instead of one node. Use it as the entry point when nothing is selected and you hold no node id. Depth counts from the page, so options.depth 1 lists those children alone as a compact directory to pick from, and 2 adds one level inside each. Mutually exclusive with nodeId."
       )
       .optional(),
     options: z

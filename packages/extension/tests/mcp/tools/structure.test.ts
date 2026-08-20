@@ -16,7 +16,7 @@ function mockOutline(roots: unknown[]): void {
 }
 
 describe('mcp/tools/structure', () => {
-  it('uses undefined depth when input depth is falsy and returns outline payload', () => {
+  it('passes depth 0 through as a roots-only cap and returns outline payload', () => {
     vi.mocked(buildSemanticTree).mockReturnValue({
       roots: [{ id: 'root-1' }]
     } as unknown as ReturnType<typeof buildSemanticTree>)
@@ -24,8 +24,9 @@ describe('mcp/tools/structure', () => {
 
     const result = handleGetStructure([{ id: 'node-1', visible: true } as unknown as SceneNode], 0)
 
+    // 0 must survive: it is what makes a page outline list frames without expanding them.
     expect(buildSemanticTree).toHaveBeenCalledWith([{ id: 'node-1', visible: true }], {
-      depthLimit: undefined
+      depthLimit: 0
     })
     expect(result).toEqual({
       roots: [

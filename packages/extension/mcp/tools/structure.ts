@@ -26,7 +26,8 @@ export function handleGetStructure(
   depthLimit?: number,
   includeNative = false
 ): GetStructureResult {
-  const tree = buildSemanticTree(roots, { depthLimit: depthLimit || undefined })
+  // 0 is meaningful: it caps at the roots themselves, which is how a page outline lists frames.
+  const tree = buildSemanticTree(roots, { depthLimit: depthLimit ?? undefined })
   const outline = semanticTreeToOutline(tree.roots)
   const { authoringKeys, nativeById } = collectStructureMetadata(
     roots,

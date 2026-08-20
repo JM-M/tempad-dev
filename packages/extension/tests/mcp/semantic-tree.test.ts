@@ -161,6 +161,25 @@ describe('mcp/semantic-tree', () => {
     expect(cappedChild.children).toEqual([])
   })
 
+  it('caps at the roots themselves for depth limit 0, keeping wrapper roots intact', () => {
+    const soleChild = createNode('FRAME', 'sole-child')
+    const wrapper = createNode('FRAME', 'wrapper-1', {}, [soleChild])
+    const twoChildren = createNode('FRAME', 'parent-1', {}, [
+      createNode('FRAME', 'kid-1'),
+      createNode('FRAME', 'kid-2')
+    ])
+
+    const capped = buildSemanticTree([wrapper, twoChildren], { depthLimit: 0 })
+
+    // A page outline depends on this: the ids returned must be the page's own children, and a
+    // single-child root must not be replaced by its child through wrapper flattening.
+    expect(capped.roots.map((node) => node.id)).toEqual(['wrapper-1', 'parent-1'])
+    expect(capped.roots.every((node) => node.children.length === 0)).toBe(true)
+
+    const expanded = buildSemanticTree([wrapper, twoChildren], { depthLimit: 1 })
+    expect(expanded.roots.map((node) => node.id)).toEqual(['sole-child', 'parent-1'])
+  })
+
   it('converts semantic tree nodes into outline nodes recursively', () => {
     const semanticNodes: SemanticNode[] = [
       {

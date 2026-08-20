@@ -194,7 +194,7 @@ export const TOOL_DEFS = [
   extTool({
     name: 'get_structure',
     description:
-      "Read a compact hierarchy and geometry outline for an exact node or the current single selection. Pass root 'page' instead of nodeId to outline the current page's top-level children; that is the entry point when nothing is selected and you hold no node id, and options.depth 1 keeps it to a frame directory you can pick from. Every x/y is relative to the node's actual Figma parent, including an outlined root; only page children are page-relative. The outline includes stable keys on TemPad-managed nodes. Set options.native for read-back of masks, IMAGE paint hashes, layout grids, and frame guides; it does not provide rendered pixels or general appearance.",
+      "Read a compact hierarchy and geometry outline for an exact node or the current single selection. Pass root 'page' instead of nodeId to outline the current page's top-level children; that is the entry point when nothing is selected and you hold no node id. In that mode depth counts from the page, so options.depth 1 keeps it to a flat frame directory you can pick from; raise it only once you know which frame you want. Every x/y is relative to the node's actual Figma parent, including an outlined root; only page children are page-relative. The outline includes stable keys on TemPad-managed nodes. Set options.native for read-back of masks, IMAGE paint hashes, layout grids, and frame guides; it does not provide rendered pixels or general appearance.",
     annotations: READ_ONLY_ANNOTATIONS,
     parameters: GetStructureParametersSchema,
     target: 'extension',
