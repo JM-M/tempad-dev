@@ -8,6 +8,9 @@ host skill owns task workflow, representation choice, and design judgment.
 - For Figma-to-code, use `get_code` as visible implementation evidence. Use `get_structure` only for
   hierarchy, geometry, managed authoring-key uncertainty, or targeted mask, IMAGE paint,
   layout-grid, and frame-guide read-back through `options.native`.
+- When nothing is selected and you hold no node id, enter through `get_structure` with `root: 'page'`
+  and `options.depth: 1` to list the current page's top-level frames, then work from the ids it
+  returns. Do not ask the user for an id you can look up yourself.
 - For canvas authoring, choose the Figma representation through the applicable skill, then use
   `apply_canvas` to describe one declarative desired result. Canvas HTML serializes ordinary layers;
   typed fields carry selected native state, resources, and bindings. Never emit raw Plugin API

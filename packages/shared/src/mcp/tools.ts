@@ -110,32 +110,48 @@ export type GetScreenshotResult = {
 }
 
 // get_structure
-export const GetStructureParametersSchema = z.object({
-  nodeId: z
-    .string()
-    .describe(
-      'Optional node id to outline; defaults to the current single selection. Useful for explicit hierarchy/geometry and for recovering stable authoring keys on TemPad-managed nodes.'
-    )
-    .optional(),
-  options: z
-    .object({
-      depth: z
-        .number()
-        .int()
-        .positive()
-        .describe(
-          'Positive integer; 1 is the shallowest traversal (root plus direct children). Omit for the full tree, subject to safety caps.'
-        )
-        .optional(),
-      native: z
-        .boolean()
-        .describe(
-          'Include compact native read-back for masks, IMAGE paint hashes, layout grids, and frame guides.'
-        )
-        .optional()
-    })
-    .optional()
-})
+export const GetStructureParametersSchema = z
+  .object({
+    nodeId: z
+      .string()
+      .describe(
+        'Optional node id to outline; defaults to the current single selection. Useful for explicit hierarchy/geometry and for recovering stable authoring keys on TemPad-managed nodes.'
+      )
+      .optional(),
+    root: z
+      .enum(['page'])
+      .describe(
+        "Outline the current page's top-level children instead of one node. Use it as the entry point when nothing is selected and you hold no node id; pair with options.depth 1 for a compact frame directory to pick from. Mutually exclusive with nodeId."
+      )
+      .optional(),
+    options: z
+      .object({
+        depth: z
+          .number()
+          .int()
+          .positive()
+          .describe(
+            'Positive integer; 1 is the shallowest traversal (root plus direct children). Omit for the full tree, subject to safety caps.'
+          )
+          .optional(),
+        native: z
+          .boolean()
+          .describe(
+            'Include compact native read-back for masks, IMAGE paint hashes, layout grids, and frame guides.'
+          )
+          .optional()
+      })
+      .optional()
+  })
+  .superRefine((value, context) => {
+    if (value.nodeId !== undefined && value.root !== undefined) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Pass either nodeId or root, not both.',
+        path: ['root']
+      })
+    }
+  })
 
 export type GetStructureParametersInput = z.input<typeof GetStructureParametersSchema>
 export type OutlineNativeImageFill = {

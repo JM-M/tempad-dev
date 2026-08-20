@@ -68,6 +68,10 @@ describe('tools response helpers', () => {
     expect(applyCanvas?.description).toContain('preserves omitted live state')
     expect(getStructure?.description).toContain("relative to the node's actual Figma parent")
     expect(getStructure?.description).toContain('only page children are page-relative')
+    expect(getStructure?.description).toContain("root 'page'")
+    expect(getStructure?.description).toContain('entry point when nothing is selected')
+    expect(getStructure?.parameters.parse({ root: 'page' })).toEqual({ root: 'page' })
+    expect(() => getStructure?.parameters.parse({ nodeId: '1:2', root: 'page' })).toThrow()
     expect(designSystem?.parameters.parse({})).toEqual({})
     expect(
       applyCanvas?.parameters.parse({

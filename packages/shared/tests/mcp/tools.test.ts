@@ -2322,8 +2322,25 @@ describe('mcp/tools parameter schemas', () => {
       }).success
     ).toBe(false)
 
+    // root: 'page' is the cold-start entry point, so it must work with no other input.
+    expect(GetStructureParametersSchema.safeParse({ root: 'page' }).success).toBe(true)
+    expect(
+      GetStructureParametersSchema.safeParse({
+        root: 'page',
+        options: { depth: 1, native: true }
+      }).success
+    ).toBe(true)
+    expect(GetStructureParametersSchema.safeParse({ root: 'document' }).success).toBe(false)
+
+    const bothRoots = GetStructureParametersSchema.safeParse({ nodeId: '1:2', root: 'page' })
+    expect(bothRoots.success).toBe(false)
+    expect(bothRoots.error?.issues[0]?.message).toBe('Pass either nodeId or root, not both.')
+
     expect(z.toJSONSchema(GetStructureParametersSchema)).toMatchObject({
       properties: {
+        root: {
+          enum: ['page']
+        },
         options: {
           properties: {
             depth: {

@@ -282,6 +282,49 @@ describe('mcp/runtime', () => {
     expect(mocks.runGetStructure).toHaveBeenLastCalledWith([node], undefined, undefined)
   })
 
+  it('outlines the current page top-level children for root page', async () => {
+    const visible = createSceneNode('frame-1')
+    const hidden = createSceneNode('frame-2', false)
+    vi.stubGlobal('figma', {
+      getNodeById: vi.fn().mockReturnValue(null),
+      currentPage: { children: [visible, hidden] }
+    } as unknown as PluginAPI)
+    mocks.runGetStructure.mockResolvedValue({ roots: [] })
+
+    const runtime = await importRuntime()
+
+    // No selection and no nodeId: this is the cold-start entry point, so it must not throw.
+    await runtime.MCP_TOOL_HANDLERS.get_structure({ root: 'page', options: { depth: 1 } })
+
+    expect(mocks.runGetStructure).toHaveBeenCalledWith([visible], 1, undefined)
+  })
+
+  it('returns no roots for an empty page rather than failing', async () => {
+    vi.stubGlobal('figma', {
+      getNodeById: vi.fn().mockReturnValue(null),
+      currentPage: { children: [] }
+    } as unknown as PluginAPI)
+    mocks.runGetStructure.mockResolvedValue({ roots: [] })
+
+    const runtime = await importRuntime()
+
+    await runtime.MCP_TOOL_HANDLERS.get_structure({ root: 'page' })
+
+    expect(mocks.runGetStructure).toHaveBeenCalledWith([], undefined, undefined)
+  })
+
+  it('rejects nodeId and root together', async () => {
+    const node = createSceneNode('node-2')
+    setFigmaGetNodeById(node)
+
+    const runtime = await importRuntime()
+
+    await expect(
+      runtime.MCP_TOOL_HANDLERS.get_structure({ nodeId: 'node-2', root: 'page' })
+    ).rejects.toThrow('Pass either nodeId or root, not both.')
+    expect(mocks.runGetStructure).not.toHaveBeenCalled()
+  })
+
   it('passes select_node arguments through untouched', async () => {
     setFigmaGetNodeById(null)
     mocks.runSelectNode.mockResolvedValue({ id: 'node-3' })

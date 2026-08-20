@@ -99,10 +99,21 @@ async function handleGetScreenshot(
 }
 
 async function handleGetStructure(args?: GetStructureParametersInput): Promise<GetStructureResult> {
-  const { nodeId, options } = args ?? {}
-  const root = resolveSingleNode(nodeId)
+  const { nodeId, root, options } = args ?? {}
   const depth = options?.depth
-  return runGetStructure([root], depth, options?.native)
+
+  // The parameters schema rejects this over MCP; window.tempadTools callers bypass it.
+  if (nodeId !== undefined && root !== undefined) {
+    throw new Error('Pass either nodeId or root, not both.')
+  }
+
+  if (root === 'page') {
+    // The page itself is not a scene node, so its children are the outlinable roots.
+    const children = figma.currentPage.children.filter((child) => child.visible)
+    return runGetStructure(children, depth, options?.native)
+  }
+
+  return runGetStructure([resolveSingleNode(nodeId)], depth, options?.native)
 }
 
 export const MCP_TOOL_HANDLERS = {

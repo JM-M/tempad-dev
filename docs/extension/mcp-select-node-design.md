@@ -97,7 +97,7 @@ whole file, and is why the tool is not silent — it always reports the node and
 - **No multi-node selection.** One `nodeId`, matching every other tool's parameter shape. Multi-select
   can be added later without breaking the contract.
 - **No node search or discovery tool.** `get_structure` already returns id, name, type, and geometry
-  trees. The remaining gap is cold start — an agent with nothing selected and no id has no entry
-  point — and the proportionate fix is a root selector on `get_structure`, not a second tool
-  competing for the agent's context budget.
+  trees. The cold-start gap — an agent with nothing selected and no id has no entry point — is now
+  closed by `get_structure`'s `root: 'page'` selector, which outlines the current page's top-level
+  children, rather than by a second tool competing for the agent's context budget.
 - **No selection subscription.** Reading the current selection is already covered by the other tools.
