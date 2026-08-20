@@ -12,6 +12,7 @@ import {
   createDesignSystemToolResponse,
   createInlineBudgetExceededToolResponse,
   createScreenshotToolResponse,
+  createSelectNodeToolResponse,
   createStructureToolResponse,
   createTokenDefsToolResponse,
   createToolErrorResponse
@@ -42,7 +43,14 @@ describe('tools response helpers', () => {
     expect(
       new Set(TOOL_DEFS.filter((tool) => tool.exposed !== false).map((tool) => tool.name))
     ).toEqual(
-      new Set(['get_code', 'get_design_system', 'apply_canvas', 'get_screenshot', 'get_structure'])
+      new Set([
+        'get_code',
+        'get_design_system',
+        'apply_canvas',
+        'get_screenshot',
+        'get_structure',
+        'select_node'
+      ])
     )
   })
 
@@ -78,7 +86,18 @@ describe('tools response helpers', () => {
       openWorldHint: true
     })
 
-    for (const tool of TOOL_DEFS.filter((definition) => definition.name !== 'apply_canvas')) {
+    // select_node writes, but only to session state: no document mutation, and repeating it
+    // leaves the file unchanged.
+    const selectNode = TOOL_DEFS.find((tool) => tool.name === 'select_node')
+    expect(selectNode?.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
+    })
+
+    const mutatingTools = new Set(['apply_canvas', 'select_node'])
+    for (const tool of TOOL_DEFS.filter((definition) => !mutatingTools.has(definition.name))) {
       expect(tool.annotations).toEqual({
         readOnlyHint: true,
         destructiveHint: false,
@@ -86,6 +105,16 @@ describe('tools response helpers', () => {
         openWorldHint: false
       })
     }
+  })
+
+  it('steers agents away from calling select_node just to read a node', () => {
+    const selectNode = TOOL_DEFS.find((tool) => tool.name === 'select_node')
+
+    expect(selectNode?.description).toContain('every read tool already accepts nodeId')
+    expect(selectNode?.description).toContain('returns the previous selection')
+    expect(selectNode?.parameters.parse({ nodeId: '1:2' })).toEqual({ nodeId: '1:2' })
+    expect(() => selectNode?.parameters.parse({ nodeId: '1:2', depth: 2 })).toThrow()
+    expect(() => selectNode?.parameters.parse({})).toThrow()
   })
 
   it('formats code tool responses with summaries, warnings, assets and tokens', () => {
@@ -431,6 +460,19 @@ describe('tools response helpers', () => {
     expect(() =>
       createTokenDefsToolResponse({ '--x': null } as unknown as ToolResultMap['get_token_defs'])
     ).toThrow(/Invalid get_token_defs payload/)
+    expect(() =>
+      createSelectNodeToolResponse({ id: '1:2' } as unknown as ToolResultMap['select_node'])
+    ).toThrow(/Invalid select_node payload/)
+    expect(() =>
+      createSelectNodeToolResponse({
+        id: '1:2',
+        name: 'Card',
+        type: 'FRAME',
+        page: { id: 'page-1' },
+        pageChanged: false,
+        previousSelection: []
+      } as unknown as ToolResultMap['select_node'])
+    ).toThrow(/Invalid select_node payload/)
     expect(() =>
       createDesignSystemToolResponse({
         catalogId: null

@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   runGetDesignSystem: vi.fn(),
   runGetScreenshot: vi.fn(),
   runGetStructure: vi.fn(),
-  runGetTokenDefs: vi.fn()
+  runGetTokenDefs: vi.fn(),
+  runSelectNode: vi.fn()
 }))
 
 vi.mock('@/ui/state', () => ({
@@ -39,6 +40,10 @@ vi.mock('@/mcp/tools/structure', () => ({
 
 vi.mock('@/mcp/tools/token', () => ({
   handleGetTokenDefs: mocks.runGetTokenDefs
+}))
+
+vi.mock('@/mcp/tools/select', () => ({
+  handleSelectNode: mocks.runSelectNode
 }))
 
 function createSceneNode(id: string, visible = true): SceneNode {
@@ -79,7 +84,8 @@ describe('mcp/runtime', () => {
         'get_design_system',
         'get_token_defs',
         'get_screenshot',
-        'get_structure'
+        'get_structure',
+        'select_node'
       ])
     )
     expect(typeof (globalThis as { window?: unknown }).window).toBe('undefined')
@@ -274,5 +280,18 @@ describe('mcp/runtime', () => {
 
     await runtime.MCP_TOOL_HANDLERS.get_structure()
     expect(mocks.runGetStructure).toHaveBeenLastCalledWith([node], undefined, undefined)
+  })
+
+  it('passes select_node arguments through untouched', async () => {
+    setFigmaGetNodeById(null)
+    mocks.runSelectNode.mockResolvedValue({ id: 'node-3' })
+
+    const runtime = await importRuntime()
+    const args = { nodeId: 'node-3', scrollIntoView: false }
+
+    await runtime.MCP_TOOL_HANDLERS.select_node(args)
+
+    // select_node resolves its own node asynchronously, so runtime must not pre-resolve for it.
+    expect(mocks.runSelectNode).toHaveBeenCalledWith(args)
   })
 })

@@ -66,6 +66,7 @@ export const EXTENSION_COVERAGE_FILES = [
   'mcp/tools/design-system-catalog.ts',
   'mcp/tools/structure.ts',
   'mcp/tools/screenshot.ts',
+  'mcp/tools/select.ts',
   'mcp/tools/code/layout-parent.ts',
   'mcp/tools/code/messages.ts',
   'mcp/tools/code/render/plugin.ts',

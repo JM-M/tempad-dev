@@ -10,6 +10,7 @@ import {
   buildGetScreenshotToolResult,
   buildGetStructureToolResult,
   buildGetTokenDefsToolResult,
+  buildSelectNodeToolResult,
   measureCallToolResultBytes,
   utf8Bytes
 } from '../../src/mcp/responses'
@@ -82,6 +83,33 @@ describe('mcp/responses helpers', () => {
       }
     })
     expect(tokens.content?.[0]?.text).toContain('Resolved 1 token definition')
+  })
+
+  it('builds select-node summaries that carry restore context', () => {
+    const payload = {
+      id: '8:288',
+      name: 'Rectangle',
+      type: 'FRAME',
+      page: { id: 'page-2', name: 'Website components' },
+      pageChanged: true,
+      previousSelection: ['1:1', '1:2']
+    }
+    const switched = buildSelectNodeToolResult(payload)
+
+    expect(switched.structuredContent).toEqual(payload)
+    expect(switched.content?.[0]?.text).toContain('Selected FRAME "Rectangle" (8:288)')
+    expect(switched.content?.[0]?.text).toContain('page "Website components"')
+    expect(switched.content?.[0]?.text).toContain('current page was switched')
+    expect(switched.content?.[0]?.text).toContain('Previous selection: 1:1, 1:2')
+
+    const samePage = buildSelectNodeToolResult({
+      ...payload,
+      pageChanged: false,
+      previousSelection: []
+    })
+
+    expect(samePage.content?.[0]?.text).not.toContain('current page was switched')
+    expect(samePage.content?.[0]?.text).toContain('Nothing was selected before this call.')
   })
 
   it('builds design-system and canvas-apply summaries', () => {

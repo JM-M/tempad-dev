@@ -5,7 +5,8 @@ import type {
   GetDesignSystemResult,
   GetScreenshotResult,
   GetStructureResult,
-  GetTokenDefsResult
+  GetTokenDefsResult,
+  SelectNodeResult
 } from './tools'
 
 const ENCODER = new TextEncoder()
@@ -127,6 +128,16 @@ export function buildGetStructureToolResult(payload: GetStructureResult): ToolRe
     : 'Read structuredContent for the full outline payload.'
 
   return buildTextToolResult(`${summary}\n${guidance}`, payload)
+}
+
+export function buildSelectNodeToolResult(payload: SelectNodeResult): ToolResponseLike {
+  const summary = `Selected ${payload.type} "${payload.name}" (${payload.id}) on page "${payload.page.name}".`
+  const page = payload.pageChanged ? ' The current page was switched to reach it.' : ''
+  const restore = payload.previousSelection.length
+    ? ` Previous selection: ${payload.previousSelection.join(', ')} — restore it with select_node when the person needs their own context back.`
+    : ' Nothing was selected before this call.'
+
+  return buildTextToolResult(`${summary}${page}${restore}`, payload)
 }
 
 export function buildGetTokenDefsToolResult(payload: GetTokenDefsResult): ToolResponseLike {

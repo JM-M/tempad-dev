@@ -167,6 +167,37 @@ export type GetStructureResult = {
   truncated?: true
 }
 
+// select_node
+export const SelectNodeParametersSchema = z
+  .object({
+    nodeId: z
+      .string()
+      .min(1)
+      .describe(
+        'Exact node id to select, from an earlier tool result. The node must exist and be visible; it may live on any page of the current file.'
+      ),
+    scrollIntoView: z
+      .boolean()
+      .describe(
+        'Scroll and zoom the viewport to the node so the person can see what was selected; default true. Pass false to change selection without moving their view.'
+      )
+      .optional()
+  })
+  .strict()
+
+export type SelectNodeParametersInput = z.input<typeof SelectNodeParametersSchema>
+export type SelectNodeResult = {
+  id: string
+  name: string
+  type: string
+  page: {
+    id: string
+    name: string
+  }
+  pageChanged: boolean
+  previousSelection: string[]
+}
+
 // get_design_system
 export const GetDesignSystemParametersSchema = z
   .object({
@@ -2265,6 +2296,7 @@ export type ToolResultMap = {
   get_token_defs: GetTokenDefsResult
   get_screenshot: GetScreenshotResult
   get_structure: GetStructureResult
+  select_node: SelectNodeResult
   get_assets: GetAssetsResult
 }
 

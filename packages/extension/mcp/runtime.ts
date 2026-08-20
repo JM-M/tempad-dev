@@ -20,6 +20,7 @@ import { handleApplyCanvas } from './tools/canvas'
 import { handleGetCode as runGetCode } from './tools/code'
 import { handleGetDesignSystem } from './tools/design-system'
 import { handleGetScreenshot as runGetScreenshot } from './tools/screenshot'
+import { handleSelectNode } from './tools/select'
 import { handleGetStructure as runGetStructure } from './tools/structure'
 import { handleGetTokenDefs as runGetTokenDefs } from './tools/token'
 
@@ -110,7 +111,8 @@ export const MCP_TOOL_HANDLERS = {
   get_design_system: handleGetDesignSystem,
   get_token_defs: handleGetTokenDefs,
   get_screenshot: handleGetScreenshot,
-  get_structure: handleGetStructure
+  get_structure: handleGetStructure,
+  select_node: handleSelectNode
 }
 
 export type MCPHandlers = typeof MCP_TOOL_HANDLERS

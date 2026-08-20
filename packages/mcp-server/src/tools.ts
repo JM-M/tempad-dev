@@ -20,6 +20,7 @@ import {
   buildGetScreenshotToolResult,
   buildGetStructureToolResult,
   buildGetTokenDefsToolResult,
+  buildSelectNodeToolResult,
   GetAssetsParametersSchema,
   GetAssetsResultSchema,
   GetCodeParametersSchema,
@@ -28,6 +29,7 @@ import {
   GetScreenshotParametersSchema,
   GetStructureParametersSchema,
   GetTokenDefsParametersSchema,
+  SelectNodeParametersSchema,
   TEMPAD_MCP_ERROR_CODES,
   measureCallToolResultBytes
 } from '@tempad-dev/shared'
@@ -50,6 +52,8 @@ export type {
   GetStructureResult,
   GetTokenDefsParametersInput,
   GetTokenDefsResult,
+  SelectNodeParametersInput,
+  SelectNodeResult,
   TokenEntry,
   ToolName,
   ToolResultMap,
@@ -89,6 +93,15 @@ const CANVAS_WRITE_ANNOTATIONS = {
   destructiveHint: true,
   idempotentHint: false,
   openWorldHint: true
+} satisfies ToolAnnotations
+
+// Selection writes mutate session state only: nothing in the document changes, and
+// selecting the same node twice leaves the file exactly as it was.
+const SELECTION_WRITE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false
 } satisfies ToolAnnotations
 
 const CONNECTIVITY_ERROR_CODES = new Set<TempadMcpErrorCode>([
@@ -186,6 +199,15 @@ export const TOOL_DEFS = [
     parameters: GetStructureParametersSchema,
     target: 'extension',
     format: createStructureToolResponse
+  }),
+  extTool({
+    name: 'select_node',
+    description:
+      'Move the current Figma selection to an exact node, switching page and scrolling the viewport when needed. Use it to put the person in front of the node under discussion, or to hand back control; every read tool already accepts nodeId, so do not call this merely to read a node. The response returns the previous selection so it can be restored.',
+    annotations: SELECTION_WRITE_ANNOTATIONS,
+    parameters: SelectNodeParametersSchema,
+    target: 'extension',
+    format: createSelectNodeToolResponse
   }),
   hubTool({
     name: 'get_assets',
@@ -299,6 +321,12 @@ export function createStructureToolResponse(
   return formatToolResult('get_structure', payload, isStructureResult, buildGetStructureToolResult)
 }
 
+export function createSelectNodeToolResponse(
+  payload: ToolResultMap['select_node']
+): CallToolResult {
+  return formatToolResult('select_node', payload, isSelectNodeResult, buildSelectNodeToolResult)
+}
+
 export function createTokenDefsToolResponse(
   payload: ToolResultMap['get_token_defs']
 ): CallToolResult {
@@ -357,6 +385,20 @@ function isCodeResult(payload: unknown): payload is ToolResultMap['get_code'] {
 
 function isStructureResult(payload: unknown): payload is ToolResultMap['get_structure'] {
   return isRecord(payload) && Array.isArray(payload.roots)
+}
+
+function isSelectNodeResult(payload: unknown): payload is ToolResultMap['select_node'] {
+  return (
+    isRecord(payload) &&
+    typeof payload.id === 'string' &&
+    typeof payload.name === 'string' &&
+    typeof payload.type === 'string' &&
+    isRecord(payload.page) &&
+    typeof payload.page.id === 'string' &&
+    typeof payload.page.name === 'string' &&
+    typeof payload.pageChanged === 'boolean' &&
+    Array.isArray(payload.previousSelection)
+  )
 }
 
 function isTokenDefsResult(payload: unknown): payload is ToolResultMap['get_token_defs'] {
@@ -427,6 +469,8 @@ function getBudgetRetryGuidance(toolName: ToolName): string {
       return 'Pass a smaller nodeId and retry.'
     case 'get_assets':
       return 'Request fewer hashes in a single call and retry.'
+    case 'select_node':
+      return 'Ask the person to narrow their existing multi-node selection and retry.'
   }
 }
 
