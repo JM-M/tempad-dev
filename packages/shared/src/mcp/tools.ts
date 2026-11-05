@@ -115,7 +115,7 @@ export const GetStructureParametersSchema = z
     nodeId: z
       .string()
       .describe(
-        'Optional node id to outline; defaults to the current single selection. Useful for explicit hierarchy/geometry and for recovering stable authoring keys on TemPad-managed nodes.'
+        'Optional node id to outline; defaults to the current selection, outlining every selected node when several are selected. Useful for explicit hierarchy/geometry and for recovering stable authoring keys on TemPad-managed nodes.'
       )
       .optional(),
     root: z

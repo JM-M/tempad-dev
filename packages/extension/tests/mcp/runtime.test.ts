@@ -303,6 +303,52 @@ describe('mcp/runtime', () => {
     expect(mocks.runGetStructure).toHaveBeenLastCalledWith([visible], 2, undefined)
   })
 
+  it('outlines every visible node of a multi-selection when nodeId is omitted', async () => {
+    const first = createSceneNode('frame-1')
+    const hidden = createSceneNode('frame-2', false)
+    const last = createSceneNode('frame-3')
+    const picked = createSceneNode('frame-4')
+    setFigmaGetNodeById(picked)
+    mocks.selection.value = [first, hidden, last]
+    mocks.runGetStructure.mockResolvedValue({ roots: [] })
+
+    const runtime = await importRuntime()
+
+    await runtime.MCP_TOOL_HANDLERS.get_structure({ options: { depth: 1 } })
+    expect(mocks.runGetStructure).toHaveBeenCalledWith([first, last], 1, undefined)
+
+    // An explicit nodeId still wins over the selection.
+    await runtime.MCP_TOOL_HANDLERS.get_structure({ nodeId: 'frame-4' })
+    expect(mocks.runGetStructure).toHaveBeenLastCalledWith([picked], undefined, undefined)
+
+    mocks.selection.value = [hidden, createSceneNode('frame-5', false)]
+    await expect(runtime.MCP_TOOL_HANDLERS.get_structure()).rejects.toMatchObject({
+      code: TEMPAD_MCP_ERROR_CODES.INVALID_SELECTION
+    })
+  })
+
+  it('orders the page outline nearest the selection first', async () => {
+    const at = (id: string, x: number, y: number) =>
+      ({
+        ...createSceneNode(id),
+        absoluteBoundingBox: { x, y, width: 10, height: 10 }
+      }) as unknown as SceneNode
+    const far = at('far', 5000, 5000)
+    const near = at('near', 100, 0)
+    const middle = at('middle', 1000, 0)
+    const selected = at('selected', 0, 0)
+    vi.stubGlobal('figma', {
+      getNodeById: vi.fn().mockReturnValue(null),
+      currentPage: { children: [far, middle, near, selected], selection: [selected] }
+    } as unknown as PluginAPI)
+    mocks.runGetStructure.mockResolvedValue({ roots: [] })
+
+    const runtime = await importRuntime()
+
+    await runtime.MCP_TOOL_HANDLERS.get_structure({ root: 'page', options: { depth: 1 } })
+    expect(mocks.runGetStructure).toHaveBeenCalledWith([selected, near, middle, far], 0, undefined)
+  })
+
   it('returns no roots for an empty page rather than failing', async () => {
     vi.stubGlobal('figma', {
       getNodeById: vi.fn().mockReturnValue(null),

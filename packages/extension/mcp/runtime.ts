@@ -112,11 +112,48 @@ async function handleGetStructure(args?: GetStructureParametersInput): Promise<G
     // relative to the page, so depth 1 lists those children alone rather than expanding each one.
     // That also keeps the ids honest: deeper limits let wrapper flattening replace a single-child
     // frame with its child, which would hand back ids that are not the page's own frames.
-    const children = figma.currentPage.children.filter((child) => child.visible)
+    const children = nearestFirst(
+      figma.currentPage.children.filter((child) => child.visible),
+      figma.currentPage.selection ?? selection.value
+    )
     return runGetStructure(children, depth === undefined ? undefined : depth - 1, options?.native)
   }
 
+  // A multi-selection outlines each selected node side by side, so a whole flow can be read in one
+  // call. Hidden nodes drop out; a selection with none left falls through to the single-node error.
+  // Figma's own selection is read first: the synced copy only refreshes on canvas clicks and
+  // shortcuts, so a selection made in the layers panel can lag behind it.
+  const selected = figma.currentPage?.selection ?? selection.value
+  if (nodeId === undefined && selected.length > 1) {
+    const visible = selected.filter((node) => node.visible)
+    if (visible.length) return runGetStructure(visible, depth, options?.native)
+  }
+
   return runGetStructure([resolveSingleNode(nodeId)], depth, options?.native)
+}
+
+// The page outline is capped, so on a large page the frames past the cap are unreachable. With a
+// selection, the page's children are ordered nearest it first, so the frames around what the person
+// is looking at always make the cut. Without one, layer order stands.
+function nearestFirst(children: SceneNode[], selected: readonly SceneNode[]): SceneNode[] {
+  const anchors = selected.map(pageCenter).filter((point) => point !== null)
+  if (!anchors.length) return children
+
+  const distance = (node: SceneNode) => {
+    const center = pageCenter(node)
+    if (!center) return Number.POSITIVE_INFINITY
+    return Math.min(...anchors.map((a) => Math.hypot(center.x - a.x, center.y - a.y)))
+  }
+  return children
+    .map((node, index) => ({ node, index, distance: distance(node) }))
+    .sort((a, b) => a.distance - b.distance || a.index - b.index)
+    .map(({ node }) => node)
+}
+
+function pageCenter(node: SceneNode): { x: number; y: number } | null {
+  const box = 'absoluteBoundingBox' in node ? node.absoluteBoundingBox : null
+  if (!box) return null
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
 
 export const MCP_TOOL_HANDLERS = {
